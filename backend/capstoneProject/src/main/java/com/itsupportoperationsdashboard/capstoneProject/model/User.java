@@ -1,5 +1,7 @@
 package com.itsupportoperationsdashboard.capstoneProject.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -29,6 +31,7 @@ public class User {
 
     @Column(name = "password_hash", nullable = false, length = 255)
     @ToString.Exclude
+    @JsonIgnore
     private String passwordHash;
 
     @Column(name = "role", nullable = false, length = 20)
