@@ -1,122 +1,120 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import './App.css';
+import { useAuth } from './auth/useAuth';
+import AppLayout from './components/AppLayout';
+import DashboardPage from './pages/DashboardPage';
+import LoginPage from './pages/LoginPage';
+import TicketDetailsPage from './pages/TicketDetailsPage';
 
-function App() {
-  const [count, setCount] = useState(0)
+const TICKET_ROUTE = /^\/tickets\/(\d+)$/;
 
+const isValidPath = (path) => path === '/' || path === '/login' || TICKET_ROUTE.test(path);
+
+const sanitizePath = (path) => (isValidPath(path) ? path : '/');
+
+const getPath = () => sanitizePath(window.location.pathname || '/');
+
+const parseRoute = (path) => {
+  if (path === '/login') {
+    return { type: 'login' };
+  }
+
+  if (path === '/') {
+    return { type: 'dashboard' };
+  }
+
+  const match = path.match(TICKET_ROUTE);
+  if (match) {
+    return {
+      type: 'ticket-details',
+      ticketId: Number(match[1]),
+    };
+  }
+
+  return { type: 'dashboard' };
+};
+
+function FullScreenMessage({ title, message }) {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <div className="centered-state">
+      <h1>{title}</h1>
+      <p>{message}</p>
+    </div>
+  );
 }
 
-export default App
+function App() {
+  const { isLoading, isAuthenticated } = useAuth();
+  const [currentPath, setCurrentPath] = useState(getPath());
+
+  useEffect(() => {
+    const handlePopState = () => setCurrentPath(getPath());
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigate = useCallback((path, replace = false) => {
+    const safePath = sanitizePath(path);
+    const method = replace ? 'replaceState' : 'pushState';
+    window.history[method]({}, '', safePath);
+    setCurrentPath(safePath);
+  }, []);
+
+  let effectivePath = currentPath;
+  if (!isAuthenticated && effectivePath !== '/login') {
+    effectivePath = '/login';
+  } else if (isAuthenticated && effectivePath === '/login') {
+    effectivePath = '/';
+  }
+
+  if (!isLoading && window.location.pathname !== effectivePath) {
+    window.history.replaceState({}, '', effectivePath);
+  }
+
+  const route = useMemo(() => parseRoute(effectivePath), [effectivePath]);
+
+  if (isLoading) {
+    return (
+      <FullScreenMessage
+        title="Loading dashboard"
+        message="Checking your current session and security context…"
+      />
+    );
+  }
+
+  if (route.type === 'login') {
+    return <LoginPage onLoginSuccess={() => navigate('/', true)} />;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <FullScreenMessage
+        title="Redirecting"
+        message="Your session is unavailable. Please sign in to continue."
+      />
+    );
+  }
+
+  const pageTitle = route.type === 'ticket-details' ? `Ticket #${route.ticketId}` : 'Dashboard';
+  const pageSubtitle =
+    route.type === 'ticket-details'
+      ? 'View ticket details available to your current role.'
+      : 'View and inspect current support tickets.';
+
+  return (
+    <AppLayout
+      currentPath={route.type === 'ticket-details' ? '/' : effectivePath}
+      onNavigate={navigate}
+      pageTitle={pageTitle}
+      pageSubtitle={pageSubtitle}
+    >
+      {route.type === 'ticket-details' ? (
+        <TicketDetailsPage ticketId={route.ticketId} onBack={() => navigate('/')} />
+      ) : (
+        <DashboardPage onViewTicket={(id) => navigate(`/tickets/${id}`)} />
+      )}
+    </AppLayout>
+  );
+}
+
+export default App;
