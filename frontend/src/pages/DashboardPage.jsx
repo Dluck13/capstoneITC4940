@@ -37,7 +37,7 @@ const valueOrFallback = (value, fallback = '—') => {
   return value;
 };
 
-export default function DashboardPage({ onViewTicket }) {
+export default function DashboardPage({ onCreateTicket, onViewTicket }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -123,6 +123,9 @@ export default function DashboardPage({ onViewTicket }) {
             <h2>Tickets</h2>
             <p>Showing ticket list results available to your current role.</p>
           </div>
+          <button type="button" className="primary-btn" onClick={onCreateTicket}>
+            Create Ticket
+          </button>
         </div>
 
         {loading && <p className="info-text">Loading tickets…</p>}

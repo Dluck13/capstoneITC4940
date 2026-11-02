@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 
-export default function LoginPage({ onLoginSuccess }) {
+export default function LoginPage({ onLoginSuccess, onCreateAccount }) {
   const { login, isAuthenticated, sessionExpired, clearSessionExpired, globalError, clearGlobalError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -92,6 +92,13 @@ export default function LoginPage({ onLoginSuccess }) {
             {submitting ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
+
+        <div className="auth-footer">
+          <span>New here?</span>
+          <button type="button" className="text-link-btn" onClick={onCreateAccount} disabled={submitting}>
+            Create an account
+          </button>
+        </div>
       </section>
     </div>
   );

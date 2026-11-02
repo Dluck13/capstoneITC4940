@@ -43,3 +43,7 @@ Thumbs.db
 ### Frontend / Node ###
 node_modules/
 dist/
+
+### Local Docs ###
+backend/capstoneProject/TICKET_API.md
+backend/capstoneProject/AUTHENTICATION.md

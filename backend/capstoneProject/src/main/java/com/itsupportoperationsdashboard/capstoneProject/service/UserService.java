@@ -4,6 +4,8 @@ import com.itsupportoperationsdashboard.capstoneProject.model.User;
 import com.itsupportoperationsdashboard.capstoneProject.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Locale;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,12 +23,28 @@ public class UserService {
 
     public User saveUser(User user) {
         user.setUserId(null);
+        user.setEmail(normalizeEmail(user.getEmail()));
         user.setPasswordHash(hashPlaintextPassword(user.getPasswordHash()));
         return userRepository.save(user);
     }
 
+    @Transactional
+    public User registerEndUser(String name, String email, String plaintextPassword) {
+        return createManagedUser(name, email, plaintextPassword, "END_USER", true);
+    }
+
+    @Transactional
+    public User createSupportAccount(String name, String email, String plaintextPassword, String role) {
+        String normalizedRole = normalizeAdminCreatableRole(role);
+        return createManagedUser(name, email, plaintextPassword, normalizedRole, true);
+    }
+
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    public List<User> getActiveTechnicians() {
+        return userRepository.findByActiveTrueAndRoleInOrderByNameAsc(List.of("TECHNICIAN", "TECH"));
     }
 
     public User getUserById(Long userId) {
@@ -35,7 +53,7 @@ public class UserService {
     }
 
     public User getUserByEmail(String email) {
-        return userRepository.findByEmail(email)
+        return userRepository.findByEmailIgnoreCase(normalizeEmail(email))
                 .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
     }
 
@@ -68,5 +86,44 @@ public class UserService {
             throw new IllegalArgumentException("Password must be provided as plaintext.");
         }
         return passwordEncoder.encode(plaintextPassword);
+    }
+
+    private User createManagedUser(String name, String email, String plaintextPassword, String role, boolean active) {
+        String normalizedEmail = normalizeEmail(email);
+        if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
+            throw new DuplicateEmailException("Email address is already in use");
+        }
+
+        User user = new User();
+        user.setName(name.trim());
+        user.setEmail(normalizedEmail);
+        user.setPasswordHash(hashPlaintextPassword(plaintextPassword));
+        user.setRole(role);
+        user.setActive(active);
+
+        try {
+            return userRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException exception) {
+            throw new DuplicateEmailException("Email address is already in use", exception);
+        }
+    }
+
+    public static String normalizeEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static String normalizeAdminCreatableRole(String role) {
+        if (role == null) {
+            throw new IllegalArgumentException("Role is required");
+        }
+
+        String normalized = role.trim().toUpperCase(Locale.ROOT);
+        return switch (normalized) {
+            case "TECHNICIAN", "ADMIN" -> normalized;
+            default -> throw new IllegalArgumentException("Role must be TECHNICIAN or ADMIN");
+        };
     }
 }

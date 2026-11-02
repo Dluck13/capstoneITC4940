@@ -2,13 +2,25 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import './App.css';
 import { useAuth } from './auth/useAuth';
 import AppLayout from './components/AppLayout';
+import AdminUserCreatePage from './pages/AdminUserCreatePage';
+import CreateTicketPage from './pages/CreateTicketPage';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import TicketDetailsPage from './pages/TicketDetailsPage';
 
+const NEW_TICKET_ROUTE = '/tickets/new';
+const REGISTER_ROUTE = '/register';
+const ADMIN_USERS_NEW_ROUTE = '/admin/users/new';
 const TICKET_ROUTE = /^\/tickets\/(\d+)$/;
 
-const isValidPath = (path) => path === '/' || path === '/login' || TICKET_ROUTE.test(path);
+const isValidPath = (path) =>
+  path === '/' ||
+  path === '/login' ||
+  path === REGISTER_ROUTE ||
+  path === NEW_TICKET_ROUTE ||
+  path === ADMIN_USERS_NEW_ROUTE ||
+  TICKET_ROUTE.test(path);
 
 const sanitizePath = (path) => (isValidPath(path) ? path : '/');
 
@@ -19,8 +31,20 @@ const parseRoute = (path) => {
     return { type: 'login' };
   }
 
+  if (path === REGISTER_ROUTE) {
+    return { type: 'register' };
+  }
+
   if (path === '/') {
     return { type: 'dashboard' };
+  }
+
+  if (path === NEW_TICKET_ROUTE) {
+    return { type: 'create-ticket' };
+  }
+
+  if (path === ADMIN_USERS_NEW_ROUTE) {
+    return { type: 'admin-users-new' };
   }
 
   const match = path.match(TICKET_ROUTE);
@@ -44,7 +68,7 @@ function FullScreenMessage({ title, message }) {
 }
 
 function App() {
-  const { isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated, user } = useAuth();
   const [currentPath, setCurrentPath] = useState(getPath());
 
   useEffect(() => {
@@ -61,9 +85,9 @@ function App() {
   }, []);
 
   let effectivePath = currentPath;
-  if (!isAuthenticated && effectivePath !== '/login') {
+  if (!isAuthenticated && effectivePath !== '/login' && effectivePath !== REGISTER_ROUTE) {
     effectivePath = '/login';
-  } else if (isAuthenticated && effectivePath === '/login') {
+  } else if (isAuthenticated && (effectivePath === '/login' || effectivePath === REGISTER_ROUTE)) {
     effectivePath = '/';
   }
 
@@ -83,7 +107,21 @@ function App() {
   }
 
   if (route.type === 'login') {
-    return <LoginPage onLoginSuccess={() => navigate('/', true)} />;
+    return (
+      <LoginPage
+        onLoginSuccess={() => navigate('/', true)}
+        onCreateAccount={() => navigate(REGISTER_ROUTE)}
+      />
+    );
+  }
+
+  if (route.type === 'register') {
+    return (
+      <RegisterPage
+        onBackToLogin={() => navigate('/login', true)}
+        onRegistered={() => navigate('/login', true)}
+      />
+    );
   }
 
   if (!isAuthenticated) {
@@ -95,23 +133,56 @@ function App() {
     );
   }
 
-  const pageTitle = route.type === 'ticket-details' ? `Ticket #${route.ticketId}` : 'Dashboard';
+  const pageTitle =
+    route.type === 'ticket-details'
+      ? `Ticket #${route.ticketId}`
+      : route.type === 'admin-users-new'
+        ? 'Account Management'
+      : route.type === 'create-ticket'
+        ? 'Create Ticket'
+        : 'Dashboard';
+
   const pageSubtitle =
     route.type === 'ticket-details'
       ? 'View ticket details available to your current role.'
-      : 'View and inspect current support tickets.';
+      : route.type === 'admin-users-new'
+        ? 'Create TECHNICIAN and ADMIN accounts as an administrator.'
+      : route.type === 'create-ticket'
+        ? 'Submit a new support request for IT operations.'
+        : 'View and inspect current support tickets.';
+
+  const activeNavPath =
+    route.type === 'create-ticket'
+      ? NEW_TICKET_ROUTE
+      : route.type === 'admin-users-new'
+        ? ADMIN_USERS_NEW_ROUTE
+        : '/';
 
   return (
     <AppLayout
-      currentPath={route.type === 'ticket-details' ? '/' : effectivePath}
+      currentPath={activeNavPath}
       onNavigate={navigate}
       pageTitle={pageTitle}
       pageSubtitle={pageSubtitle}
     >
-      {route.type === 'ticket-details' ? (
+      {route.type === 'admin-users-new' ? (
+        user?.role === 'ADMIN' ? (
+          <AdminUserCreatePage />
+        ) : (
+          <section className="card">
+            <h2>Access denied</h2>
+            <p className="info-text">Only administrators can access account management.</p>
+          </section>
+        )
+      ) : route.type === 'ticket-details' ? (
         <TicketDetailsPage ticketId={route.ticketId} onBack={() => navigate('/')} />
+      ) : route.type === 'create-ticket' ? (
+        <CreateTicketPage onCancel={() => navigate('/')} onCreated={(ticketId) => navigate(`/tickets/${ticketId}`)} />
       ) : (
-        <DashboardPage onViewTicket={(id) => navigate(`/tickets/${id}`)} />
+        <DashboardPage
+          onCreateTicket={() => navigate(NEW_TICKET_ROUTE)}
+          onViewTicket={(id) => navigate(`/tickets/${id}`)}
+        />
       )}
     </AppLayout>
   );

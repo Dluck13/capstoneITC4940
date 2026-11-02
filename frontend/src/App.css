@@ -61,6 +61,7 @@
 
 .auth-form input:focus-visible,
 .auth-form button:focus-visible,
+.text-link-btn:focus-visible,
 .nav-item:focus-visible,
 .logout-btn:focus-visible {
   outline: 2px solid #77a7db;
@@ -84,6 +85,31 @@
   cursor: default;
 }
 
+.auth-footer {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.text-link-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.text-link-btn:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
 .alert {
   border-radius: 8px;
   border: 1px solid;
@@ -102,6 +128,12 @@
   background: var(--warn-bg);
   border-color: var(--warn-border);
   color: var(--warn-text);
+}
+
+.alert.success {
+  background: #ecfdf5;
+  border-color: #9ad9bd;
+  color: #165f3d;
 }
 
 .app-shell {
@@ -440,4 +472,194 @@
     text-transform: uppercase;
     letter-spacing: 0.03em;
   }
+}
+
+.primary-btn {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  cursor: pointer;
+}
+
+.primary-btn:disabled,
+.secondary-btn:disabled,
+.table-link:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.ticket-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ticket-form label {
+  font-weight: 600;
+}
+
+.ticket-form input,
+.ticket-form textarea,
+.ticket-form select {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  background: #fff;
+}
+
+.ticket-form textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+
+.ticket-form-row {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.ticket-form-row > div {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ticket-form-actions {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.field-error {
+  margin: 0;
+  color: var(--danger-text);
+  font-size: 0.86rem;
+}
+
+.ticket-form input:focus-visible,
+.ticket-form textarea:focus-visible,
+.ticket-form select:focus-visible,
+.secondary-btn:focus-visible,
+.primary-btn:focus-visible,
+.table-link:focus-visible {
+  outline: 2px solid #77a7db;
+  outline-offset: 1px;
+}
+
+.action-panel {
+  margin-bottom: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 0.85rem;
+}
+
+.action-panel h3 {
+  margin: 0 0 0.7rem;
+  font-size: 1rem;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.action-row label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.action-row select {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  min-width: 220px;
+  font: inherit;
+  background: #fff;
+}
+
+.action-stack {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.6rem;
+}
+
+.action-stack label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.action-stack textarea {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  resize: vertical;
+  background: #fff;
+}
+
+.comment-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.comment-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  padding: 0.75rem;
+}
+
+.comment-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.comment-item p {
+  margin: 0.45rem 0 0;
+  white-space: pre-wrap;
+  color: var(--text);
+}
+
+.comment-form {
+  margin-top: 0.85rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.comment-form label {
+  font-weight: 600;
+}
+
+.comment-form textarea {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  resize: vertical;
+  background: #fff;
+}
+
+.comment-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.comment-form textarea:focus-visible,
+.action-stack textarea:focus-visible {
+  outline: 2px solid #77a7db;
+  outline-offset: 1px;
 }

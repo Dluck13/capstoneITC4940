@@ -16,6 +16,19 @@ export const login = (email, password) =>
     suppressUnauthorizedHandler: true,
   });
 
+export const register = ({ name, email, password }) =>
+  apiRequest('/api/auth/register', {
+    method: 'POST',
+    body: { name, email, password },
+    suppressUnauthorizedHandler: true,
+  });
+
+export const createAdminUser = ({ name, email, password, role }) =>
+  apiRequest('/api/admin/users', {
+    method: 'POST',
+    body: { name, email, password, role },
+  });
+
 export const logout = () =>
   apiRequest('/api/auth/logout', {
     method: 'POST',

@@ -10,6 +10,11 @@ public final class AuthDtos {
                                @NotBlank @Size(max = 72) String password) {
         @Override public String toString() { return "LoginRequest[credentials redacted]"; }
     }
+    public record RegisterRequest(@NotBlank @Size(max = 100) String name,
+                                  @NotBlank @Email @Size(max = 255) String email,
+                                  @NotBlank @Size(min = 8, max = 72) String password) {
+        @Override public String toString() { return "RegisterRequest[credentials redacted]"; }
+    }
     public record UserResponse(Long id, String name, String email, String role) implements java.io.Serializable {}
     public record CsrfResponse(String headerName, String token) {}
     public record ErrorResponse(int status, String message) {}

@@ -49,9 +49,15 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/api/auth/csrf").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auth/me").hasAnyRole("END_USER", "TECHNICIAN", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/admin/users").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/tickets", "/api/tickets/{id}")
                     .hasAnyRole("END_USER", "TECHNICIAN", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/categories")
+                    .hasAnyRole("END_USER", "TECHNICIAN", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/technicians")
+                    .hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/tickets")
                     .hasAnyRole("END_USER", "TECHNICIAN", "ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/tickets/{id}/assign", "/api/tickets/{id}/status")
@@ -93,3 +99,5 @@ public class SecurityConfig {
         return source;
     }
 }
+
+

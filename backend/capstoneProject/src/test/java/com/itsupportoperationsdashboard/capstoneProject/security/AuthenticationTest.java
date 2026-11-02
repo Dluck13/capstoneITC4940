@@ -4,6 +4,7 @@ import com.itsupportoperationsdashboard.capstoneProject.auth.*;
 import com.itsupportoperationsdashboard.capstoneProject.config.*;
 import com.itsupportoperationsdashboard.capstoneProject.model.User;
 import com.itsupportoperationsdashboard.capstoneProject.repository.UserRepository;
+import com.itsupportoperationsdashboard.capstoneProject.service.UserService;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ class AuthenticationTest {
     @Configuration
     @EnableWebMvc
     @Import({SecurityConfig.class, PasswordConfig.class, DatabaseUserDetailsService.class,
-            AuthController.class, AuthExceptionHandler.class, TicketAccess.class})
+            AuthController.class, AuthExceptionHandler.class, TicketAccess.class, UserService.class})
     static class Config {
         @Bean UserRepository users() { return mock(UserRepository.class); }
         @Bean ObjectMapper mapper() { return new ObjectMapper(); }
@@ -66,7 +67,7 @@ class AuthenticationTest {
         user.setEmail("user@example.com");
         user.setPasswordHash(encoder.encode("TestPassword123!"));
         user.setRole("END_USER");
-        when(users.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(users.findByEmailIgnoreCase(user.getEmail())).thenReturn(Optional.of(user));
     }
 
     @Test
@@ -210,12 +211,12 @@ class AuthenticationTest {
     }
 
     @Test
-    void unimplementedRoutesAreDeniedEvenForAuthenticatedUsers() throws Exception {
+    void unsupportedRoutesRemainDeniedForAuthenticatedUsers() throws Exception {
         var result = mvc.perform(post("/api/auth/login").with(csrf()).contentType("application/json")
                 .content(loginJson(user.getEmail(), "TestPassword123!"))).andReturn();
         var session = (MockHttpSession) result.getRequest().getSession(false);
         mvc.perform(post("/api/tickets/1/assign").session(session).with(csrf())).andExpect(status().isForbidden());
-        mvc.perform(post("/api/auth/register").session(session).with(csrf()))
+        mvc.perform(delete("/api/auth/login").session(session).with(csrf()))
                 .andExpect(status().isForbidden());
     }
 

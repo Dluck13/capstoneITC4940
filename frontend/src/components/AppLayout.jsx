@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 
-const NAV_ITEMS = [
-  { key: 'dashboard', label: 'Dashboard', path: '/', disabled: false },
-  { key: 'create-ticket', label: 'Create Ticket', path: '#', disabled: true },
+const BASE_NAV_ITEMS = [
+  { key: 'dashboard', label: 'Dashboard', path: '/' },
+  { key: 'create-ticket', label: 'Create Ticket', path: '/tickets/new' },
 ];
+
+const ADMIN_NAV_ITEM = { key: 'admin-users', label: 'Manage Accounts', path: '/admin/users/new' };
 
 export default function AppLayout({ children, onNavigate, currentPath, pageTitle, pageSubtitle }) {
   const { user, logout } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
+  const navItems = user?.role === 'ADMIN' ? [...BASE_NAV_ITEMS, ADMIN_NAV_ITEM] : BASE_NAV_ITEMS;
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -22,16 +25,15 @@ export default function AppLayout({ children, onNavigate, currentPath, pageTitle
       <aside className="sidebar">
         <div className="brand">IT Support Operations Dashboard</div>
         <nav className="nav-list" aria-label="Main navigation">
-          {NAV_ITEMS.map((item) => {
-            const active = !item.disabled && currentPath === item.path;
+          {navItems.map((item) => {
+            const active = currentPath === item.path;
             return (
               <button
                 key={item.key}
                 type="button"
                 className={`nav-item ${active ? 'active' : ''}`}
-                disabled={item.disabled}
                 onClick={() => onNavigate(item.path)}
-                title={item.disabled ? 'Coming soon' : item.label}
+                title={item.label}
               >
                 {item.label}
               </button>
