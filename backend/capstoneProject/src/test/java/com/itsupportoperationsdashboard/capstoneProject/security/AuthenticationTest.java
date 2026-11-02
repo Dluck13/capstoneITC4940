@@ -140,13 +140,21 @@ class AuthenticationTest {
     }
 
     @Test
-    void corsAllowsOnlyReactOrigin() throws Exception {
+    void corsAllowsConfiguredOriginsOnly() throws Exception {
         mvc.perform(options("/api/auth/login").header("Origin", "http://localhost:5173")
                 .header("Access-Control-Request-Method", "POST")
                 .header("Access-Control-Request-Headers", "content-type,x-csrf-token"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"))
                 .andExpect(header().string("Access-Control-Allow-Credentials", "true"));
+
+        mvc.perform(options("/api/auth/login").header("Origin", "https://ticketcoop.onrender.com")
+                .header("Access-Control-Request-Method", "POST")
+                .header("Access-Control-Request-Headers", "content-type,x-csrf-token"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "https://ticketcoop.onrender.com"))
+                .andExpect(header().string("Access-Control-Allow-Credentials", "true"));
+
         mvc.perform(options("/api/auth/login").header("Origin", "https://untrusted.example")
                 .header("Access-Control-Request-Method", "POST")).andExpect(status().isForbidden());
     }
@@ -250,3 +258,4 @@ class AuthenticationTest {
         return mapper.writeValueAsString(java.util.Map.of("email", email, "password", password));
     }
 }
+

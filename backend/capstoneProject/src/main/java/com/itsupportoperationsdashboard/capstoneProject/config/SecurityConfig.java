@@ -2,8 +2,9 @@ package com.itsupportoperationsdashboard.capstoneProject.config;
 
 import com.itsupportoperationsdashboard.capstoneProject.auth.AuthDtos.ErrorResponse;
 import com.itsupportoperationsdashboard.capstoneProject.security.DatabaseUserDetailsService;
-import org.springframework.beans.factory.annotation.Value;
+import java.util.Arrays;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -28,7 +29,7 @@ import tools.jackson.databind.ObjectMapper;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-    @Value("${app.cors.allowed-origins:http://localhost:5173}")
+    @Value("${app.cors.allowed-origins:http://localhost:5173,https://ticketcoop.onrender.com}")
     private String allowedOrigins;
 
     @Bean
@@ -114,7 +115,11 @@ public class SecurityConfig {
     @Bean
     UrlBasedCorsConfigurationSource corsConfigurationSource() {
         var cors = new CorsConfiguration();
-        cors.setAllowedOrigins(List.of(allowedOrigins.split(",")));
+        var origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .toList();
+        cors.setAllowedOrigins(origins);
         cors.setAllowedMethods(List.of("GET", "POST", "PATCH", "OPTIONS"));
         cors.setAllowedHeaders(List.of("Content-Type", "X-CSRF-TOKEN"));
         cors.setAllowCredentials(true);
