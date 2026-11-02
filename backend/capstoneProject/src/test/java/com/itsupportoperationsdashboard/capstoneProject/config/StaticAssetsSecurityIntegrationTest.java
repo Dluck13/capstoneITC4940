@@ -43,6 +43,17 @@ class StaticAssetsSecurityIntegrationTest {
     }
 
     @Test
+    void viteHashedAssetsAreServedWithExpectedMimeTypes() throws Exception {
+        mvc.perform(get("/assets/index-_9SR3Sf4.js"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/javascript"));
+
+        mvc.perform(get("/assets/index-BR_zdTX7.css"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/css"));
+    }
+
+    @Test
     void protectedApiRemainsProtectedWithoutAuthentication() throws Exception {
         mvc.perform(get("/api/tickets"))
                 .andExpect(status().isUnauthorized());
