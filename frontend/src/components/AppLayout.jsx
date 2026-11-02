@@ -24,7 +24,7 @@ export default function AppLayout({ children, onNavigate, currentPath, pageTitle
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand">IT Support Operations Dashboard</div>
+        <div className="brand">TicketNex</div>
         <nav className="nav-list" aria-label="Main navigation">
           {navItems.map((item) => {
             const active = currentPath === item.path;
@@ -67,3 +67,4 @@ export default function AppLayout({ children, onNavigate, currentPath, pageTitle
     </div>
   );
 }
+

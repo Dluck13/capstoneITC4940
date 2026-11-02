@@ -46,7 +46,7 @@ export default function LoginPage({ onLoginSuccess, onCreateAccount }) {
 
       <section className="auth-card">
         <header className="auth-header">
-          <h1>IT Support Operations Dashboard</h1>
+          <h1>TicketNex</h1>
           <p>Sign in with your support account.</p>
         </header>
 
@@ -108,3 +108,4 @@ export default function LoginPage({ onLoginSuccess, onCreateAccount }) {
     </div>
   );
 }
+
