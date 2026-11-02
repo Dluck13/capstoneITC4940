@@ -2,6 +2,7 @@ package com.itsupportoperationsdashboard.capstoneProject.config;
 
 import com.itsupportoperationsdashboard.capstoneProject.auth.AuthDtos.ErrorResponse;
 import com.itsupportoperationsdashboard.capstoneProject.security.DatabaseUserDetailsService;
+import org.springframework.beans.factory.annotation.Value;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,8 @@ import tools.jackson.databind.ObjectMapper;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+    @Value("${app.cors.allowed-origins:http://localhost:5173}")
+    private String allowedOrigins;
     @Bean
     AuthenticationManager authenticationManager(DatabaseUserDetailsService users, BCryptPasswordEncoder encoder) {
         var provider = new DaoAuthenticationProvider(users);
@@ -50,6 +53,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/auth/csrf").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+                .requestMatchers(HttpMethod.GET, "/", "/index.html", "/login", "/register", "/tickets/new", "/tickets/*", "/admin/users/new", "/assets/**", "/favicon.ico").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auth/me").hasAnyRole("END_USER", "TECHNICIAN", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/admin/users").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/tickets", "/api/tickets/{id}")
@@ -90,7 +94,7 @@ public class SecurityConfig {
     @Bean
     UrlBasedCorsConfigurationSource corsConfigurationSource() {
         var cors = new CorsConfiguration();
-        cors.setAllowedOrigins(List.of("http://localhost:5173"));
+        cors.setAllowedOrigins(List.of(allowedOrigins.split(",")));
         cors.setAllowedMethods(List.of("GET", "POST", "PATCH", "OPTIONS"));
         cors.setAllowedHeaders(List.of("Content-Type", "X-CSRF-TOKEN"));
         cors.setAllowCredentials(true);
@@ -99,5 +103,6 @@ public class SecurityConfig {
         return source;
     }
 }
+
 
 

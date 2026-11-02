@@ -140,7 +140,7 @@ function App() {
         ? 'Account Management'
       : route.type === 'create-ticket'
         ? 'Create Ticket'
-        : 'Dashboard';
+        : 'TicketCoop Dashboard';
 
   const pageSubtitle =
     route.type === 'ticket-details'
@@ -149,7 +149,7 @@ function App() {
         ? 'Create TECHNICIAN and ADMIN accounts as an administrator.'
       : route.type === 'create-ticket'
         ? 'Submit a new support request for IT operations.'
-        : 'View and inspect current support tickets.';
+        : 'IT Support Operations Dashboard';
 
   const activeNavPath =
     route.type === 'create-ticket'
@@ -189,3 +189,4 @@ function App() {
 }
 
 export default App;
+

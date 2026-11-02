@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ApiError } from '../api/httpClient';
 import { register as registerRequest } from '../api/authApi';
 import ThemeToggleButton from '../components/ThemeToggleButton';
+import TicketCoopLogo from '../components/TicketCoopLogo';
 
 const toMessage = (error) => {
   if (error instanceof ApiError && error.message) {
@@ -54,79 +55,88 @@ export default function RegisterPage({ onBackToLogin, onRegistered }) {
         <ThemeToggleButton />
       </div>
 
-      <section className="auth-card">
-        <header className="auth-header">
-          <h1>Create your account</h1>
-          <p>Register a new end-user account for IT support requests.</p>
+      <div className="auth-container">
+        <header className="auth-branding" aria-label="TicketCoop branding">
+          <TicketCoopLogo size={126} />
+          <h1><span className="brand-word-primary">Ticket</span><span className="brand-word-accent">Coop</span></h1>
+          <p>IT Support Operations Dashboard</p>
         </header>
 
-        {error && (
-          <div className="alert error" role="alert">
-            {error}
+        <section className="auth-card">
+          <header className="auth-header">
+            <h2>Create your account</h2>
+            <p>Register a new end-user account for IT support requests.</p>
+          </header>
+
+          {error && (
+            <div className="alert error" role="alert">
+              {error}
+            </div>
+          )}
+
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <label htmlFor="register-name">Name</label>
+            <input
+              id="register-name"
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              disabled={submitting}
+              maxLength={100}
+              required
+            />
+
+            <label htmlFor="register-email">Email</label>
+            <input
+              id="register-email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              disabled={submitting}
+              required
+            />
+
+            <label htmlFor="register-password">Password</label>
+            <input
+              id="register-password"
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              disabled={submitting}
+              minLength={8}
+              maxLength={72}
+              required
+            />
+
+            <label htmlFor="register-confirm-password">Confirm password</label>
+            <input
+              id="register-confirm-password"
+              type="password"
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              disabled={submitting}
+              minLength={8}
+              maxLength={72}
+              required
+            />
+
+            <button type="submit" disabled={submitting}>
+              {submitting ? 'Creating account…' : 'Create Account'}
+            </button>
+          </form>
+
+          <div className="auth-footer">
+            <span>Already have an account?</span>
+            <button type="button" className="text-link-btn" onClick={onBackToLogin} disabled={submitting}>
+              Back to sign in
+            </button>
           </div>
-        )}
-
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <label htmlFor="register-name">Name</label>
-          <input
-            id="register-name"
-            type="text"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            disabled={submitting}
-            maxLength={100}
-            required
-          />
-
-          <label htmlFor="register-email">Email</label>
-          <input
-            id="register-email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            disabled={submitting}
-            required
-          />
-
-          <label htmlFor="register-password">Password</label>
-          <input
-            id="register-password"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            disabled={submitting}
-            minLength={8}
-            maxLength={72}
-            required
-          />
-
-          <label htmlFor="register-confirm-password">Confirm password</label>
-          <input
-            id="register-confirm-password"
-            type="password"
-            autoComplete="new-password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            disabled={submitting}
-            minLength={8}
-            maxLength={72}
-            required
-          />
-
-          <button type="submit" disabled={submitting}>
-            {submitting ? 'Creating account…' : 'Create Account'}
-          </button>
-        </form>
-
-        <div className="auth-footer">
-          <span>Already have an account?</span>
-          <button type="button" className="text-link-btn" onClick={onBackToLogin} disabled={submitting}>
-            Back to sign in
-          </button>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }
+

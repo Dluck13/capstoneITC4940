@@ -1,7 +1,7 @@
 :root {
   --radius: 12px;
   --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-  --focus: #7eb3ec;
+  --focus: #78c6ff;
 
   font-family: 'Segoe UI', Roboto, Arial, sans-serif;
   line-height: 1.45;
@@ -9,20 +9,21 @@
 }
 
 :root[data-theme='light'] {
-  --bg: #f3f5f8;
+  --bg: #f4f8ff;
   --surface: #ffffff;
-  --surface-muted: #f8fafc;
-  --surface-strong: #eef2f7;
-  --border: #d8e0ea;
-  --text: #152132;
-  --text-muted: #536375;
-  --nav-bg: #18273a;
-  --nav-border: #2a3f59;
-  --nav-text: #dae5f1;
-  --nav-active-bg: rgba(86, 154, 227, 0.24);
-  --nav-active-border: rgba(158, 201, 245, 0.44);
-  --accent: #1f6fc0;
-  --accent-soft: #e8f1fb;
+  --surface-muted: #f6f9ff;
+  --surface-strong: #edf4ff;
+  --border: #d3dfef;
+  --text: #10213a;
+  --text-muted: #5d6f88;
+  --nav-bg: #16263b;
+  --nav-border: #2a415d;
+  --nav-text: #dbe7f7;
+  --nav-active-bg: rgba(89, 161, 240, 0.24);
+  --nav-active-border: rgba(157, 203, 255, 0.45);
+  --accent: #258bff;
+  --accent-cyan: #4ddcff;
+  --accent-soft: #e8f4ff;
   --danger-bg: #fdecec;
   --danger-border: #f5b3b3;
   --danger-text: #982222;
@@ -34,24 +35,36 @@
   --success-text: #165f3d;
   --button-secondary-bg: #ffffff;
   --button-secondary-text: #1b2b40;
-  --row-hover: #f2f7fc;
+  --row-hover: #eff6ff;
+  --auth-page-bg: #eef4ff;
+  --auth-glow-top-left: rgba(88, 163, 249, 0.24);
+  --auth-glow-top-right: rgba(92, 208, 255, 0.2);
+  --auth-wave-line-a: rgba(88, 166, 246, 0.38);
+  --auth-wave-line-b: rgba(107, 214, 255, 0.32);
+  --auth-wave-glow-a: rgba(97, 167, 243, 0.19);
+  --auth-wave-glow-b: rgba(110, 205, 248, 0.18);
+  --auth-card-bg: rgba(255, 255, 255, 0.8);
+  --auth-card-border: rgba(166, 196, 230, 0.58);
+  --auth-card-shadow: 0 28px 54px rgba(19, 53, 94, 0.12);
+  --auth-input-bg: rgba(248, 252, 255, 0.88);
 }
 
 :root[data-theme='dark'] {
-  --bg: #111923;
-  --surface: #18232f;
-  --surface-muted: #1c2a38;
-  --surface-strong: #1f2f40;
-  --border: #2a3b4d;
-  --text: #e5edf7;
-  --text-muted: #a8b7c8;
-  --nav-bg: #101722;
-  --nav-border: #243448;
-  --nav-text: #d2deeb;
-  --nav-active-bg: rgba(74, 138, 208, 0.35);
-  --nav-active-border: rgba(141, 186, 237, 0.45);
-  --accent: #4d9be6;
-  --accent-soft: #19314a;
+  --bg: #0b1425;
+  --surface: #18263a;
+  --surface-muted: #1c2d44;
+  --surface-strong: #21334d;
+  --border: #2c4566;
+  --text: #f3f7ff;
+  --text-muted: #9bafcb;
+  --nav-bg: #0e1b2f;
+  --nav-border: #244062;
+  --nav-text: #d7e6fb;
+  --nav-active-bg: rgba(57, 133, 224, 0.33);
+  --nav-active-border: rgba(102, 182, 255, 0.42);
+  --accent: #258bff;
+  --accent-cyan: #4ddcff;
+  --accent-soft: #17365a;
   --danger-bg: #4a1f1f;
   --danger-border: #7a3535;
   --danger-text: #ffc2c2;
@@ -61,9 +74,20 @@
   --success-bg: #17382a;
   --success-border: #2f6a51;
   --success-text: #bbf2d9;
-  --button-secondary-bg: #223242;
+  --button-secondary-bg: #1f324b;
   --button-secondary-text: #deebf8;
-  --row-hover: #203244;
+  --row-hover: #20364f;
+  --auth-page-bg: #050b18;
+  --auth-glow-top-left: rgba(37, 139, 255, 0.24);
+  --auth-glow-top-right: rgba(77, 220, 255, 0.18);
+  --auth-wave-line-a: rgba(62, 157, 255, 0.48);
+  --auth-wave-line-b: rgba(84, 218, 255, 0.38);
+  --auth-wave-glow-a: rgba(37, 139, 255, 0.26);
+  --auth-wave-glow-b: rgba(77, 220, 255, 0.24);
+  --auth-card-bg: rgba(15, 28, 52, 0.75);
+  --auth-card-border: rgba(88, 131, 188, 0.56);
+  --auth-card-shadow: 0 32px 68px rgba(0, 7, 18, 0.6);
+  --auth-input-bg: rgba(8, 20, 39, 0.74);
 }
 
 * {
@@ -80,3 +104,4 @@ body {
 #root {
   min-height: 100vh;
 }
+

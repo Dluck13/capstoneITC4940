@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 import ThemeToggleButton from './ThemeToggleButton';
+import TicketCoopLogo from './TicketCoopLogo';
 
 const BASE_NAV_ITEMS = [
   { key: 'dashboard', label: 'Dashboard', path: '/' },
@@ -24,7 +25,10 @@ export default function AppLayout({ children, onNavigate, currentPath, pageTitle
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand">TicketNex</div>
+        <div className="brand" aria-label="TicketCoop application branding">
+          <TicketCoopLogo size={30} className="brand-logo" title="TicketCoop" />
+          <span>TicketCoop</span>
+        </div>
         <nav className="nav-list" aria-label="Main navigation">
           {navItems.map((item) => {
             const active = currentPath === item.path;
@@ -67,4 +71,3 @@ export default function AppLayout({ children, onNavigate, currentPath, pageTitle
     </div>
   );
 }
-
