@@ -14,7 +14,7 @@ RUN chmod +x mvnw
 RUN ./mvnw -q -DskipTests dependency:go-offline
 COPY backend/capstoneProject/src ./src
 COPY --from=frontend-builder /workspace/frontend/dist/ ./src/main/resources/static/
-RUN test -f ./src/main/resources/static/index.html && test -d ./src/main/resources/static/assets
+RUN test -f ./src/main/resources/static/index.html && test -d ./src/main/resources/static/appfiles
 RUN ./mvnw -q -DskipTests package
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
@@ -26,3 +26,4 @@ COPY --from=backend-builder --chown=spring:spring /workspace/backend/target/caps
 USER spring
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+
