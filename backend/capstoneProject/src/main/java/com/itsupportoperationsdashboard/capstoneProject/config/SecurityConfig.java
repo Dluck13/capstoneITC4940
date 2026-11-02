@@ -50,6 +50,7 @@ public class SecurityConfig {
             .securityContext(context -> context.securityContextRepository(contexts))
             .requestCache(cache -> cache.disable())
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/assets/**", "/favicon.ico", "/favicon.svg", "/vite.svg", "/manifest.webmanifest", "/robots.txt").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auth/csrf").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
