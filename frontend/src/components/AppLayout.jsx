@@ -25,10 +25,15 @@ export default function AppLayout({ children, onNavigate, currentPath, pageTitle
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand" aria-label="TicketCoop application branding">
+        <button
+          type="button"
+          className="brand brand-button"
+          aria-label="TicketCoop home"
+          onClick={() => onNavigate('/home')}
+        >
           <TicketCoopLogo size={30} className="brand-logo" title="TicketCoop" />
           <span>TicketCoop</span>
-        </div>
+        </button>
         <nav className="nav-list" aria-label="Main navigation">
           {navItems.map((item) => {
             const active = currentPath === item.path;

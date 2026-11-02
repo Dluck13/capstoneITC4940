@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
 
         if (error instanceof ApiError && error.status === 401) {
           setUser(null);
-          if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+          if (window.location.pathname !== '/login' && window.location.pathname !== '/register' && window.location.pathname !== '/') {
             setSessionExpired(true);
           }
         } else {
@@ -127,3 +127,4 @@ export function AuthProvider({ children }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+

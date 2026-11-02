@@ -3,7 +3,7 @@ import { useAuth } from '../auth/useAuth';
 import ThemeToggleButton from '../components/ThemeToggleButton';
 import TicketCoopLogo from '../components/TicketCoopLogo';
 
-export default function LoginPage({ onLoginSuccess, onCreateAccount }) {
+export default function LoginPage({ onLoginSuccess, onCreateAccount, onBackHome }) {
   const { login, isAuthenticated, sessionExpired, clearSessionExpired, globalError, clearGlobalError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -110,6 +110,10 @@ export default function LoginPage({ onLoginSuccess, onCreateAccount }) {
             <span>New here?</span>
             <button type="button" className="text-link-btn" onClick={onCreateAccount} disabled={submitting}>
               Create an account
+            </button>
+            <span aria-hidden="true">·</span>
+            <button type="button" className="text-link-btn" onClick={onBackHome} disabled={submitting}>
+              Back to home
             </button>
           </div>
         </section>

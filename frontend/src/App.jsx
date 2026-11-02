@@ -5,17 +5,20 @@ import AppLayout from './components/AppLayout';
 import AdminUserCreatePage from './pages/AdminUserCreatePage';
 import CreateTicketPage from './pages/CreateTicketPage';
 import DashboardPage from './pages/DashboardPage';
+import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import TicketDetailsPage from './pages/TicketDetailsPage';
 
 const NEW_TICKET_ROUTE = '/tickets/new';
+const HOME_ROUTE = '/home';
 const REGISTER_ROUTE = '/register';
 const ADMIN_USERS_NEW_ROUTE = '/admin/users/new';
 const TICKET_ROUTE = /^\/tickets\/(\d+)$/;
 
 const isValidPath = (path) =>
   path === '/' ||
+  path === HOME_ROUTE ||
   path === '/login' ||
   path === REGISTER_ROUTE ||
   path === NEW_TICKET_ROUTE ||
@@ -26,7 +29,9 @@ const sanitizePath = (path) => (isValidPath(path) ? path : '/');
 
 const getPath = () => sanitizePath(window.location.pathname || '/');
 
-const parseRoute = (path) => {
+const isPublicPath = (path) => path === '/' || path === HOME_ROUTE || path === '/login' || path === REGISTER_ROUTE;
+
+const parseRoute = (path, isAuthenticated) => {
   if (path === '/login') {
     return { type: 'login' };
   }
@@ -35,8 +40,12 @@ const parseRoute = (path) => {
     return { type: 'register' };
   }
 
+  if (path === HOME_ROUTE) {
+    return { type: 'home' };
+  }
+
   if (path === '/') {
-    return { type: 'dashboard' };
+    return { type: isAuthenticated ? 'dashboard' : 'home' };
   }
 
   if (path === NEW_TICKET_ROUTE) {
@@ -55,7 +64,7 @@ const parseRoute = (path) => {
     };
   }
 
-  return { type: 'dashboard' };
+  return { type: isAuthenticated ? 'dashboard' : 'home' };
 };
 
 function FullScreenMessage({ title, message }) {
@@ -85,7 +94,7 @@ function App() {
   }, []);
 
   let effectivePath = currentPath;
-  if (!isAuthenticated && effectivePath !== '/login' && effectivePath !== REGISTER_ROUTE) {
+  if (!isAuthenticated && !isPublicPath(effectivePath)) {
     effectivePath = '/login';
   } else if (isAuthenticated && (effectivePath === '/login' || effectivePath === REGISTER_ROUTE)) {
     effectivePath = '/';
@@ -95,7 +104,7 @@ function App() {
     window.history.replaceState({}, '', effectivePath);
   }
 
-  const route = useMemo(() => parseRoute(effectivePath), [effectivePath]);
+  const route = useMemo(() => parseRoute(effectivePath, isAuthenticated), [effectivePath, isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -106,11 +115,23 @@ function App() {
     );
   }
 
+  if (route.type === 'home') {
+    return (
+      <HomePage
+        isAuthenticated={isAuthenticated}
+        onGoToRegister={() => navigate(REGISTER_ROUTE)}
+        onGoToLogin={() => navigate('/login')}
+        onGoToDashboard={() => navigate('/')}
+      />
+    );
+  }
+
   if (route.type === 'login') {
     return (
       <LoginPage
         onLoginSuccess={() => navigate('/', true)}
         onCreateAccount={() => navigate(REGISTER_ROUTE)}
+        onBackHome={() => navigate(HOME_ROUTE)}
       />
     );
   }
@@ -189,4 +210,3 @@ function App() {
 }
 
 export default App;
-
