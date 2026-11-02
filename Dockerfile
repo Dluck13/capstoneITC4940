@@ -13,7 +13,8 @@ COPY backend/capstoneProject/pom.xml ./
 RUN chmod +x mvnw
 RUN ./mvnw -q -DskipTests dependency:go-offline
 COPY backend/capstoneProject/src ./src
-COPY --from=frontend-builder /workspace/frontend/dist ./src/main/resources/static
+COPY --from=frontend-builder /workspace/frontend/dist/ ./src/main/resources/static/
+RUN test -f ./src/main/resources/static/index.html && test -d ./src/main/resources/static/assets
 RUN ./mvnw -q -DskipTests package
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
