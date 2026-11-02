@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
+import ThemeToggleButton from '../components/ThemeToggleButton';
 
 export default function LoginPage({ onLoginSuccess, onCreateAccount }) {
   const { login, isAuthenticated, sessionExpired, clearSessionExpired, globalError, clearGlobalError } = useAuth();
@@ -39,6 +40,10 @@ export default function LoginPage({ onLoginSuccess, onCreateAccount }) {
 
   return (
     <div className="auth-shell">
+      <div className="auth-theme-toggle-wrap">
+        <ThemeToggleButton />
+      </div>
+
       <section className="auth-card">
         <header className="auth-header">
           <h1>IT Support Operations Dashboard</h1>

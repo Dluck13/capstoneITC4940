@@ -4,7 +4,25 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <script>
+      (function () {
+        var KEY = 'itops-dashboard-theme';
+        var value = 'light';
+
+        try {
+          var stored = window.localStorage.getItem(KEY);
+          if (stored === 'light' || stored === 'dark') {
+            value = stored;
+          }
+        } catch (_) {
+          value = 'light';
+        }
+
+        document.documentElement.setAttribute('data-theme', value);
+        document.documentElement.style.colorScheme = value;
+      })();
+    </script>
+    <title>IT Support Operations Dashboard</title>
   </head>
   <body>
     <div id="root"></div>

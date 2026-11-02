@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 import { ApiError } from '../api/httpClient';
 import {
@@ -76,6 +76,17 @@ const operationError = (error, fallback) => {
   return fallback;
 };
 
+const sortCommentsChronologically = (comments) =>
+  [...comments].sort((a, b) => {
+    const left = new Date(a.createdAt).getTime();
+    const right = new Date(b.createdAt).getTime();
+
+    if (Number.isNaN(left) && Number.isNaN(right)) return 0;
+    if (Number.isNaN(left)) return -1;
+    if (Number.isNaN(right)) return 1;
+    return left - right;
+  });
+
 export default function TicketDetailsPage({ ticketId, onBack }) {
   const { user } = useAuth();
 
@@ -101,22 +112,21 @@ export default function TicketDetailsPage({ ticketId, onBack }) {
   const [resolutionNotesInput, setResolutionNotesInput] = useState('');
   const [resolutionInputError, setResolutionInputError] = useState('');
 
-  const [actionMessage, setActionMessage] = useState('');
+  const [actionNotice, setActionNotice] = useState({ type: '', message: '' });
 
   const userRole = user?.role;
   const isAdmin = userRole === 'ADMIN';
   const isTechnician = userRole === 'TECHNICIAN';
 
-  const showAdminAssign = isAdmin && ticket?.status === 'OPEN';
-  const showTechnicianAssignToMe = isTechnician && ticket?.status === 'OPEN';
-  const showStartProgress =
-    (isAdmin || isTechnician) &&
+  const canViewAdminAssign = isAdmin && ticket?.status === 'OPEN';
+  const canAssignToMe = isTechnician && ticket?.status === 'OPEN' && Boolean(user?.id);
+  const canStartProgress =
     ticket?.status === 'ASSIGNED' &&
-    Boolean(ticket?.assignedTechnician?.id);
-
-  const showResolve = (isAdmin || isTechnician) && ticket?.status === 'IN_PROGRESS';
-  const showClose = isAdmin && ticket?.status === 'RESOLVED';
-
+    (isAdmin || (isTechnician && ticket?.assignedTechnician?.id === user?.id));
+  const canResolve =
+    ticket?.status === 'IN_PROGRESS' &&
+    (isAdmin || (isTechnician && ticket?.assignedTechnician?.id === user?.id));
+  const canClose = isAdmin && ticket?.status === 'RESOLVED';
   const canComment = Boolean(ticket) && ticket.status !== 'CLOSED';
 
   const isBusy = assigning || startingProgress || postingComment || resolving || closing;
@@ -129,7 +139,8 @@ export default function TicketDetailsPage({ ticketId, onBack }) {
 
   const loadComments = async () => {
     const data = await getTicketComments(ticketId);
-    setComments(Array.isArray(data) ? data : []);
+    const normalized = Array.isArray(data) ? data : [];
+    setComments(sortCommentsChronologically(normalized));
   };
 
   useEffect(() => {
@@ -138,7 +149,7 @@ export default function TicketDetailsPage({ ticketId, onBack }) {
     const bootstrap = async () => {
       setLoadingTicket(true);
       setTicketError('');
-      setActionMessage('');
+      setActionNotice({ type: '', message: '' });
 
       try {
         const data = await getTicketById(ticketId);
@@ -176,7 +187,8 @@ export default function TicketDetailsPage({ ticketId, onBack }) {
       try {
         const data = await getTicketComments(ticketId);
         if (!active) return;
-        setComments(Array.isArray(data) ? data : []);
+        const normalized = Array.isArray(data) ? data : [];
+        setComments(sortCommentsChronologically(normalized));
       } catch (error) {
         if (!active) return;
         setCommentError(operationError(error, 'Unable to load comments.'));
@@ -195,7 +207,7 @@ export default function TicketDetailsPage({ ticketId, onBack }) {
   }, [ticket, ticketId]);
 
   useEffect(() => {
-    if (!showAdminAssign) {
+    if (!canViewAdminAssign) {
       return;
     }
 
@@ -203,7 +215,6 @@ export default function TicketDetailsPage({ ticketId, onBack }) {
 
     const fetchTechnicians = async () => {
       setLoadingTechnicians(true);
-      setActionMessage('');
 
       try {
         const data = await getTechnicians();
@@ -211,15 +222,11 @@ export default function TicketDetailsPage({ ticketId, onBack }) {
 
         const list = Array.isArray(data) ? data : [];
         setTechnicians(list);
-        setSelectedTechnicianId((current) => {
-          if (current && list.some((tech) => String(tech.id) === current)) {
-            return current;
-          }
-          return list.length > 0 ? String(list[0].id) : '';
-        });
-      } catch (error) {
+        setSelectedTechnicianId(list[0]?.id ? String(list[0].id) : '');
+      } catch {
         if (!active) return;
-        setActionMessage(operationError(error, 'Unable to load technicians.'));
+        setTechnicians([]);
+        setSelectedTechnicianId('');
       } finally {
         if (active) {
           setLoadingTechnicians(false);
@@ -232,27 +239,29 @@ export default function TicketDetailsPage({ ticketId, onBack }) {
     return () => {
       active = false;
     };
-  }, [showAdminAssign]);
+  }, [canViewAdminAssign]);
 
   const refreshTicketAndComments = async () => {
-    await loadTicket();
+    const updated = await loadTicket();
     await loadComments();
+    return updated;
   };
 
-  const handleAdminAssign = async () => {
+  const handleAssignToTechnician = async () => {
     if (!selectedTechnicianId) {
-      setActionMessage('Please select a technician before assigning this ticket.');
+      setActionNotice({ type: 'error', message: 'Select a technician before assigning.' });
       return;
     }
 
+    setActionNotice({ type: '', message: '' });
     setAssigning(true);
-    setActionMessage('');
 
     try {
       await assignTicket(ticketId, { technicianId: Number(selectedTechnicianId) });
       await refreshTicketAndComments();
+      setActionNotice({ type: 'success', message: 'Ticket assigned successfully.' });
     } catch (error) {
-      setActionMessage(operationError(error, 'Unable to assign this ticket.'));
+      setActionNotice({ type: 'error', message: operationError(error, 'Unable to assign ticket.') });
     } finally {
       setAssigning(false);
     }
@@ -260,97 +269,125 @@ export default function TicketDetailsPage({ ticketId, onBack }) {
 
   const handleAssignToMe = async () => {
     if (!user?.id) {
-      setActionMessage('Unable to determine your account for assignment.');
+      setActionNotice({ type: 'error', message: 'Unable to identify your account for assignment.' });
       return;
     }
 
+    setActionNotice({ type: '', message: '' });
     setAssigning(true);
-    setActionMessage('');
 
     try {
-      await assignTicket(ticketId, { technicianId: user.id });
+      await assignTicket(ticketId, { technicianId: Number(user.id) });
       await refreshTicketAndComments();
+      setActionNotice({ type: 'success', message: 'Ticket assigned to you.' });
     } catch (error) {
-      setActionMessage(operationError(error, 'Unable to assign this ticket.'));
+      setActionNotice({ type: 'error', message: operationError(error, 'Unable to assign ticket to yourself.') });
     } finally {
       setAssigning(false);
     }
   };
 
   const handleStartProgress = async () => {
+    setActionNotice({ type: '', message: '' });
     setStartingProgress(true);
-    setActionMessage('');
 
     try {
       await updateTicketStatus(ticketId, { status: 'IN_PROGRESS' });
       await refreshTicketAndComments();
+      setActionNotice({ type: 'success', message: 'Ticket moved to IN_PROGRESS.' });
     } catch (error) {
-      setActionMessage(operationError(error, 'Unable to start progress for this ticket.'));
+      setActionNotice({ type: 'error', message: operationError(error, 'Unable to start progress.') });
     } finally {
       setStartingProgress(false);
-    }
-  };
-
-  const handleResolveTicket = async () => {
-    const notes = resolutionNotesInput.trim();
-
-    if (!notes) {
-      setResolutionInputError('Resolution notes are required.');
-      return;
-    }
-
-    setResolving(true);
-    setActionMessage('');
-    setResolutionInputError('');
-
-    try {
-      await resolveTicket(ticketId, { resolutionNotes: notes });
-      setResolutionNotesInput('');
-      await refreshTicketAndComments();
-    } catch (error) {
-      setActionMessage(operationError(error, 'Unable to resolve this ticket.'));
-    } finally {
-      setResolving(false);
-    }
-  };
-
-  const handleCloseTicket = async () => {
-    setClosing(true);
-    setActionMessage('');
-
-    try {
-      await closeTicket(ticketId);
-      await refreshTicketAndComments();
-    } catch (error) {
-      setActionMessage(operationError(error, 'Unable to close this ticket.'));
-    } finally {
-      setClosing(false);
     }
   };
 
   const handleSubmitComment = async (event) => {
     event.preventDefault();
 
-    const text = commentText.trim();
-    if (!text) {
+    if (!commentText.trim()) {
       setCommentError('Comment text is required.');
       return;
     }
 
-    setPostingComment(true);
+    setActionNotice({ type: '', message: '' });
     setCommentError('');
+    setPostingComment(true);
 
     try {
-      await addTicketComment(ticketId, { text });
+      await addTicketComment(ticketId, { text: commentText.trim() });
       setCommentText('');
       await loadComments();
-      await loadTicket();
+      setActionNotice({ type: 'success', message: 'Comment added.' });
     } catch (error) {
-      setCommentError(operationError(error, 'Unable to post comment.'));
+      setCommentError(operationError(error, 'Unable to add comment.'));
     } finally {
       setPostingComment(false);
     }
   };
+
+  const handleResolveTicket = async () => {
+    if (!resolutionNotesInput.trim()) {
+      setResolutionInputError('Resolution notes are required.');
+      return;
+    }
+
+    setActionNotice({ type: '', message: '' });
+    setResolutionInputError('');
+    setResolving(true);
+
+    try {
+      await resolveTicket(ticketId, { resolutionNotes: resolutionNotesInput.trim() });
+      await refreshTicketAndComments();
+      setActionNotice({ type: 'success', message: 'Ticket resolved successfully.' });
+      setResolutionNotesInput('');
+    } catch (error) {
+      setActionNotice({ type: 'error', message: operationError(error, 'Unable to resolve this ticket.') });
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  const handleCloseTicket = async () => {
+    setActionNotice({ type: '', message: '' });
+    setClosing(true);
+
+    try {
+      await closeTicket(ticketId);
+      await refreshTicketAndComments();
+      setActionNotice({ type: 'success', message: 'Ticket closed successfully.' });
+    } catch (error) {
+      setActionNotice({ type: 'error', message: operationError(error, 'Unable to close this ticket.') });
+    } finally {
+      setClosing(false);
+    }
+  };
+
+  const infoItems = useMemo(
+    () => [
+      { label: 'ID', value: valueOrFallback(ticket?.id) },
+      { label: 'Title', value: valueOrFallback(ticket?.title) },
+      { label: 'Priority', value: valueOrFallback(ticket?.priority) },
+      {
+        label: 'Status',
+        value: (
+          <span className={`status-badge status-${String(ticket?.status || '').toLowerCase()}`}>
+            {valueOrFallback(ticket?.status)}
+          </span>
+        ),
+      },
+      { label: 'Category', value: valueOrFallback(ticket?.category?.name) },
+      { label: 'Requester', value: valueOrFallback(ticket?.requester?.name) },
+      {
+        label: 'Assigned Technician',
+        value: valueOrFallback(ticket?.assignedTechnician?.name, 'Unassigned'),
+      },
+      { label: 'Created At', value: formatDateTime(ticket?.createdAt) },
+      { label: 'Updated At', value: formatDateTime(ticket?.updatedAt) },
+      { label: 'Resolved At', value: formatDateTime(ticket?.resolvedAt) },
+    ],
+    [ticket],
+  );
 
   return (
     <section className="dashboard-stack">
@@ -358,13 +395,14 @@ export default function TicketDetailsPage({ ticketId, onBack }) {
         <div className="card-header-row">
           <div>
             <h2>Ticket Details</h2>
+            <p>Review ticket metadata, timeline, actions, and collaboration updates.</p>
           </div>
           <button type="button" className="secondary-btn" onClick={onBack}>
             Back to Dashboard
           </button>
         </div>
 
-        {loadingTicket && <p className="info-text">Loading ticket #{ticketId}…</p>}
+        {loadingTicket && <p className="info-text">Loading ticket details…</p>}
 
         {!loadingTicket && ticketError && (
           <div className="alert error" role="alert">
@@ -374,85 +412,71 @@ export default function TicketDetailsPage({ ticketId, onBack }) {
 
         {!loadingTicket && !ticketError && ticket && (
           <>
-            {(showAdminAssign || showTechnicianAssignToMe || showStartProgress || showResolve || showClose || actionMessage) && (
-              <section className="action-panel">
-                <h3>Actions</h3>
+            {actionNotice.message && (
+              <div className={`alert ${actionNotice.type === 'error' ? 'error' : 'success'}`} role="status">
+                {actionNotice.message}
+              </div>
+            )}
 
-                {actionMessage && (
-                  <div className="alert error" role="alert">
-                    {actionMessage}
-                  </div>
-                )}
+            <section className="action-panel">
+              <h3>Ticket Actions</h3>
 
-                {showAdminAssign && (
+              {canViewAdminAssign && (
+                <div className="action-row">
+                  <label htmlFor="technician-select">Assign to technician</label>
+                  <select
+                    id="technician-select"
+                    value={selectedTechnicianId}
+                    onChange={(event) => setSelectedTechnicianId(event.target.value)}
+                    disabled={isBusy || loadingTechnicians || technicians.length === 0}
+                  >
+                    {technicians.length === 0 && <option value="">No active technicians</option>}
+                    {technicians.map((technician) => (
+                      <option key={technician.id} value={technician.id}>
+                        {technician.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="primary-btn"
+                    onClick={handleAssignToTechnician}
+                    disabled={isBusy || loadingTechnicians || technicians.length === 0 || !selectedTechnicianId}
+                  >
+                    {assigning ? 'Assigning…' : 'Assign Ticket'}
+                  </button>
+                </div>
+              )}
+
+              {canAssignToMe && (
+                <div className="action-row">
+                  <button type="button" className="primary-btn" onClick={handleAssignToMe} disabled={isBusy}>
+                    {assigning ? 'Assigning…' : 'Assign to Me'}
+                  </button>
+                </div>
+              )}
+
+              {canStartProgress && (
+                <div className="action-row">
+                  <button type="button" className="primary-btn" onClick={handleStartProgress} disabled={isBusy}>
+                    {startingProgress ? 'Updating…' : 'Start Progress'}
+                  </button>
+                </div>
+              )}
+
+              {canResolve && (
+                <div className="action-stack">
+                  <label htmlFor="resolution-notes">Resolution notes</label>
+                  <textarea
+                    id="resolution-notes"
+                    rows={4}
+                    maxLength={10000}
+                    value={resolutionNotesInput}
+                    onChange={(event) => setResolutionNotesInput(event.target.value)}
+                    disabled={isBusy}
+                  />
+                  {resolutionInputError && <p className="field-error">{resolutionInputError}</p>}
                   <div className="action-row">
-                    <label htmlFor="assign-technician">Assign Technician</label>
-                    <select
-                      id="assign-technician"
-                      value={selectedTechnicianId}
-                      onChange={(event) => setSelectedTechnicianId(event.target.value)}
-                      disabled={loadingTechnicians || isBusy}
-                    >
-                      {technicians.map((technician) => (
-                        <option key={technician.id} value={technician.id}>
-                          {technician.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="primary-btn"
-                      onClick={handleAdminAssign}
-                      disabled={loadingTechnicians || isBusy || technicians.length === 0}
-                    >
-                      {assigning ? 'Assigning…' : 'Assign Ticket'}
-                    </button>
-                  </div>
-                )}
-
-                {showTechnicianAssignToMe && (
-                  <div className="action-row">
-                    <button
-                      type="button"
-                      className="primary-btn"
-                      onClick={handleAssignToMe}
-                      disabled={isBusy}
-                    >
-                      {assigning ? 'Assigning…' : 'Assign to Me'}
-                    </button>
-                  </div>
-                )}
-
-                {showStartProgress && (
-                  <div className="action-row">
-                    <button
-                      type="button"
-                      className="primary-btn"
-                      onClick={handleStartProgress}
-                      disabled={isBusy}
-                    >
-                      {startingProgress ? 'Starting…' : 'Start Progress'}
-                    </button>
-                  </div>
-                )}
-
-                {showResolve && (
-                  <div className="action-stack">
-                    <label htmlFor="resolution-notes">Resolution Notes</label>
-                    <textarea
-                      id="resolution-notes"
-                      value={resolutionNotesInput}
-                      onChange={(event) => {
-                        setResolutionNotesInput(event.target.value);
-                        if (resolutionInputError) {
-                          setResolutionInputError('');
-                        }
-                      }}
-                      rows={4}
-                      maxLength={10000}
-                      disabled={isBusy}
-                    />
-                    {resolutionInputError && <p className="field-error">{resolutionInputError}</p>}
                     <button
                       type="button"
                       className="primary-btn"
@@ -462,65 +486,37 @@ export default function TicketDetailsPage({ ticketId, onBack }) {
                       {resolving ? 'Resolving…' : 'Resolve Ticket'}
                     </button>
                   </div>
-                )}
+                </div>
+              )}
 
-                {showClose && (
-                  <div className="action-row">
-                    <button
-                      type="button"
-                      className="primary-btn"
-                      onClick={handleCloseTicket}
-                      disabled={isBusy}
-                    >
-                      {closing ? 'Closing…' : 'Close Ticket'}
-                    </button>
+              {canClose && (
+                <div className="action-row">
+                  <button type="button" className="primary-btn" onClick={handleCloseTicket} disabled={isBusy}>
+                    {closing ? 'Closing…' : 'Close Ticket'}
+                  </button>
+                </div>
+              )}
+
+              {!canViewAdminAssign &&
+                !canAssignToMe &&
+                !canStartProgress &&
+                !canResolve &&
+                !canClose && (
+                  <p className="info-text">No ticket actions are available for your role at this ticket state.</p>
+                )}
+            </section>
+
+            <section className="description-card">
+              <h3>Ticket Information</h3>
+              <div className="detail-grid">
+                {infoItems.map((item) => (
+                  <div key={item.label}>
+                    <span className="detail-label">{item.label}</span>
+                    <span>{item.value}</span>
                   </div>
-                )}
-              </section>
-            )}
-
-            <div className="detail-grid">
-              <div>
-                <span className="detail-label">ID</span>
-                <span>{valueOrFallback(ticket.id)}</span>
+                ))}
               </div>
-              <div>
-                <span className="detail-label">Title</span>
-                <span>{valueOrFallback(ticket.title)}</span>
-              </div>
-              <div>
-                <span className="detail-label">Priority</span>
-                <span>{valueOrFallback(ticket.priority)}</span>
-              </div>
-              <div>
-                <span className="detail-label">Status</span>
-                <span>{valueOrFallback(ticket.status)}</span>
-              </div>
-              <div>
-                <span className="detail-label">Category</span>
-                <span>{valueOrFallback(ticket.category?.name)}</span>
-              </div>
-              <div>
-                <span className="detail-label">Requester</span>
-                <span>{valueOrFallback(ticket.requester?.name)}</span>
-              </div>
-              <div>
-                <span className="detail-label">Assigned Technician</span>
-                <span>{valueOrFallback(ticket.assignedTechnician?.name, 'Unassigned')}</span>
-              </div>
-              <div>
-                <span className="detail-label">Created At</span>
-                <span>{formatDateTime(ticket.createdAt)}</span>
-              </div>
-              <div>
-                <span className="detail-label">Updated At</span>
-                <span>{formatDateTime(ticket.updatedAt)}</span>
-              </div>
-              <div>
-                <span className="detail-label">Resolved At</span>
-                <span>{formatDateTime(ticket.resolvedAt)}</span>
-              </div>
-            </div>
+            </section>
 
             <section className="description-card">
               <h3>Description</h3>
@@ -529,7 +525,7 @@ export default function TicketDetailsPage({ ticketId, onBack }) {
 
             {ticket.resolutionNotes && (
               <section className="description-card">
-                <h3>Resolution Notes</h3>
+                <h3>Resolution</h3>
                 <p>{ticket.resolutionNotes}</p>
               </section>
             )}
@@ -593,3 +589,4 @@ export default function TicketDetailsPage({ ticketId, onBack }) {
     </section>
   );
 }
+

@@ -1,29 +1,69 @@
 :root {
+  --radius: 12px;
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --focus: #7eb3ec;
+
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  line-height: 1.45;
+  font-weight: 400;
+}
+
+:root[data-theme='light'] {
   --bg: #f3f5f8;
   --surface: #ffffff;
   --surface-muted: #f8fafc;
-  --border: #d9e0e8;
+  --surface-strong: #eef2f7;
+  --border: #d8e0ea;
   --text: #152132;
-  --text-muted: #526273;
-  --nav-bg: #17293d;
-  --nav-border: #243a52;
-  --nav-text: #d7e2ee;
-  --nav-active: #2c6fb7;
+  --text-muted: #536375;
+  --nav-bg: #18273a;
+  --nav-border: #2a3f59;
+  --nav-text: #dae5f1;
+  --nav-active-bg: rgba(86, 154, 227, 0.24);
+  --nav-active-border: rgba(158, 201, 245, 0.44);
   --accent: #1f6fc0;
+  --accent-soft: #e8f1fb;
   --danger-bg: #fdecec;
   --danger-border: #f5b3b3;
   --danger-text: #982222;
   --warn-bg: #fff5e8;
   --warn-border: #f3d3a5;
   --warn-text: #8a4f02;
-  --radius: 10px;
-  --shadow: 0 8px 24px rgba(21, 33, 50, 0.08);
+  --success-bg: #ecfdf5;
+  --success-border: #9ad9bd;
+  --success-text: #165f3d;
+  --button-secondary-bg: #ffffff;
+  --button-secondary-text: #1b2b40;
+  --row-hover: #f2f7fc;
+}
 
-  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
-  line-height: 1.4;
-  font-weight: 400;
-  color: var(--text);
-  background: var(--bg);
+:root[data-theme='dark'] {
+  --bg: #111923;
+  --surface: #18232f;
+  --surface-muted: #1c2a38;
+  --surface-strong: #1f2f40;
+  --border: #2a3b4d;
+  --text: #e5edf7;
+  --text-muted: #a8b7c8;
+  --nav-bg: #101722;
+  --nav-border: #243448;
+  --nav-text: #d2deeb;
+  --nav-active-bg: rgba(74, 138, 208, 0.35);
+  --nav-active-border: rgba(141, 186, 237, 0.45);
+  --accent: #4d9be6;
+  --accent-soft: #19314a;
+  --danger-bg: #4a1f1f;
+  --danger-border: #7a3535;
+  --danger-text: #ffc2c2;
+  --warn-bg: #49351f;
+  --warn-border: #6d4e2d;
+  --warn-text: #ffd7a7;
+  --success-bg: #17382a;
+  --success-border: #2f6a51;
+  --success-text: #bbf2d9;
+  --button-secondary-bg: #223242;
+  --button-secondary-text: #deebf8;
+  --row-hover: #203244;
 }
 
 * {
@@ -34,6 +74,7 @@ body {
   margin: 0;
   min-height: 100vh;
   background: var(--bg);
+  color: var(--text);
 }
 
 #root {

@@ -2,6 +2,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../api/httpClient';
 import { getTickets } from '../api/ticketApi';
 
+const STATUS_OPTIONS = [
+  { value: 'ALL', label: 'All Statuses' },
+  { value: 'OPEN', label: 'Open' },
+  { value: 'ASSIGNED', label: 'Assigned' },
+  { value: 'IN_PROGRESS', label: 'In Progress' },
+  { value: 'RESOLVED', label: 'Resolved' },
+  { value: 'CLOSED', label: 'Closed' },
+];
+
+const STATUS_ORDER = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
+
 const formatDateTime = (value) => {
   if (!value) return '—';
 
@@ -37,41 +48,54 @@ const valueOrFallback = (value, fallback = '—') => {
   return value;
 };
 
+const normalizeSearch = (value) => value.trim().toLowerCase();
+
+const toSearchableText = (ticket) =>
+  [ticket.id, ticket.title, ticket.description]
+    .filter((value) => value !== null && value !== undefined)
+    .map((value) => String(value).toLowerCase())
+    .join(' ');
+
 export default function DashboardPage({ onCreateTicket, onViewTicket }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  useEffect(() => {
-    let active = true;
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
 
-    const loadTickets = async () => {
+  const loadTickets = async ({ asRefresh = false } = {}) => {
+    if (asRefresh) {
+      setRefreshing(true);
+    } else {
       setLoading(true);
-      setErrorMessage('');
+    }
 
-      try {
-        const data = await getTickets();
-        if (!active) return;
-        setTickets(Array.isArray(data) ? data : []);
-      } catch (error) {
-        if (!active) return;
-        setErrorMessage(toFriendlyError(error));
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    };
+    setErrorMessage('');
 
-    loadTickets();
+    try {
+      const data = await getTickets();
+      setTickets(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setErrorMessage(toFriendlyError(error));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
-    return () => {
-      active = false;
-    };
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadTickets();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
-  const totals = useMemo(() => {
-    const initial = {
+  const summary = useMemo(() => {
+    const counts = {
+      TOTAL: tickets.length,
       OPEN: 0,
       ASSIGNED: 0,
       IN_PROGRESS: 0,
@@ -80,39 +104,67 @@ export default function DashboardPage({ onCreateTicket, onViewTicket }) {
     };
 
     for (const ticket of tickets) {
-      if (Object.prototype.hasOwnProperty.call(initial, ticket.status)) {
-        initial[ticket.status] += 1;
+      if (Object.prototype.hasOwnProperty.call(counts, ticket.status)) {
+        counts[ticket.status] += 1;
       }
     }
 
-    return initial;
+    return counts;
   }, [tickets]);
+
+  const filteredTickets = useMemo(() => {
+    const normalizedSearch = normalizeSearch(searchTerm);
+
+    return tickets.filter((ticket) => {
+      if (statusFilter !== 'ALL' && ticket.status !== statusFilter) {
+        return false;
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      return toSearchableText(ticket).includes(normalizedSearch);
+    });
+  }, [searchTerm, statusFilter, tickets]);
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('ALL');
+  };
+
+  const hasActiveFilters = searchTerm.trim() !== '' || statusFilter !== 'ALL';
 
   return (
     <section className="dashboard-stack">
       <section className="card">
-        <h2>Ticket Overview</h2>
-        <p>Live data from the support ticket retrieval API.</p>
-        <div className="status-grid">
-          <article>
+        <h2>Ticket Summary</h2>
+        <p>Counts are based on tickets your current account is authorized to view.</p>
+
+        <div className="stats-grid" aria-label="Ticket statistics">
+          <article className="stat-card">
+            <h3>Total Tickets</h3>
+            <p>{summary.TOTAL}</p>
+          </article>
+          <article className="stat-card">
             <h3>Open</h3>
-            <p>{totals.OPEN}</p>
+            <p>{summary.OPEN}</p>
           </article>
-          <article>
+          <article className="stat-card">
             <h3>Assigned</h3>
-            <p>{totals.ASSIGNED}</p>
+            <p>{summary.ASSIGNED}</p>
           </article>
-          <article>
+          <article className="stat-card">
             <h3>In Progress</h3>
-            <p>{totals.IN_PROGRESS}</p>
+            <p>{summary.IN_PROGRESS}</p>
           </article>
-          <article>
+          <article className="stat-card">
             <h3>Resolved</h3>
-            <p>{totals.RESOLVED}</p>
+            <p>{summary.RESOLVED}</p>
           </article>
-          <article>
+          <article className="stat-card">
             <h3>Closed</h3>
-            <p>{totals.CLOSED}</p>
+            <p>{summary.CLOSED}</p>
           </article>
         </div>
       </section>
@@ -121,11 +173,52 @@ export default function DashboardPage({ onCreateTicket, onViewTicket }) {
         <div className="card-header-row">
           <div>
             <h2>Tickets</h2>
-            <p>Showing ticket list results available to your current role.</p>
+            <p>Search and filter tickets available to your current role.</p>
           </div>
-          <button type="button" className="primary-btn" onClick={onCreateTicket}>
-            Create Ticket
-          </button>
+          <div className="header-actions">
+            <button type="button" className="secondary-btn" onClick={() => loadTickets({ asRefresh: true })} disabled={loading || refreshing}>
+              {refreshing ? 'Refreshing…' : 'Refresh'}
+            </button>
+            <button type="button" className="primary-btn" onClick={onCreateTicket}>
+              Create Ticket
+            </button>
+          </div>
+        </div>
+
+        <div className="filters-grid" role="search">
+          <div>
+            <label htmlFor="ticket-search">Search</label>
+            <input
+              id="ticket-search"
+              className="filter-input"
+              type="search"
+              placeholder="Search by ID, title, or description"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="ticket-status-filter">Status</label>
+            <select
+              id="ticket-status-filter"
+              className="filter-input"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-actions">
+            <button type="button" className="secondary-btn" onClick={clearFilters} disabled={!hasActiveFilters}>
+              Clear Filters
+            </button>
+          </div>
         </div>
 
         {loading && <p className="info-text">Loading tickets…</p>}
@@ -140,7 +233,13 @@ export default function DashboardPage({ onCreateTicket, onViewTicket }) {
           <p className="info-text">No tickets are currently visible for your account.</p>
         )}
 
-        {!loading && !errorMessage && tickets.length > 0 && (
+        {!loading && !errorMessage && tickets.length > 0 && filteredTickets.length === 0 && (
+          <div className="alert warning" role="status">
+            No tickets match your current search and filter values.
+          </div>
+        )}
+
+        {!loading && !errorMessage && filteredTickets.length > 0 && (
           <div className="ticket-table-wrap">
             <table className="ticket-table">
               <thead>
@@ -157,12 +256,16 @@ export default function DashboardPage({ onCreateTicket, onViewTicket }) {
                 </tr>
               </thead>
               <tbody>
-                {tickets.map((ticket) => (
+                {filteredTickets.map((ticket) => (
                   <tr key={ticket.id}>
                     <td data-label="ID">{ticket.id}</td>
                     <td data-label="Title">{valueOrFallback(ticket.title)}</td>
                     <td data-label="Priority">{valueOrFallback(ticket.priority)}</td>
-                    <td data-label="Status">{valueOrFallback(ticket.status)}</td>
+                    <td data-label="Status">
+                      <span className={`status-badge status-${String(ticket.status || '').toLowerCase()}`}>
+                        {valueOrFallback(ticket.status)}
+                      </span>
+                    </td>
                     <td data-label="Category">{valueOrFallback(ticket.category?.name)}</td>
                     <td data-label="Requester">{valueOrFallback(ticket.requester?.name)}</td>
                     <td data-label="Assigned To">
@@ -184,7 +287,18 @@ export default function DashboardPage({ onCreateTicket, onViewTicket }) {
             </table>
           </div>
         )}
+
+        {!loading && !errorMessage && filteredTickets.length > 0 && (
+          <p className="info-text summary-line">
+            Showing {filteredTickets.length} of {tickets.length} ticket{tickets.length === 1 ? '' : 's'}.
+          </p>
+        )}
+
+        {!loading && !errorMessage && tickets.length > 0 && STATUS_ORDER.some((status) => summary[status] === 0) && (
+          <p className="info-text">Statuses with zero tickets are still shown in the summary cards.</p>
+        )}
       </section>
     </section>
   );
 }
+

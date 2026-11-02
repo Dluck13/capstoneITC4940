@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../auth/useAuth';
+import ThemeToggleButton from './ThemeToggleButton';
 
 const BASE_NAV_ITEMS = [
   { key: 'dashboard', label: 'Dashboard', path: '/' },
@@ -48,17 +49,14 @@ export default function AppLayout({ children, onNavigate, currentPath, pageTitle
             <h1>{pageTitle || 'Dashboard'}</h1>
             <p className="muted">{pageSubtitle || 'Welcome back to support operations.'}</p>
           </div>
-          <div className="user-info">
+
+          <div className="topbar-controls">
             <div className="user-details">
               <strong>{user?.name || 'Unknown User'}</strong>
               <span className="role-badge">{user?.role || 'UNKNOWN'}</span>
             </div>
-            <button
-              type="button"
-              className="logout-btn"
-              onClick={handleLogout}
-              disabled={loggingOut}
-            >
+            <ThemeToggleButton />
+            <button type="button" className="logout-btn" onClick={handleLogout} disabled={loggingOut}>
               {loggingOut ? 'Signing out…' : 'Logout'}
             </button>
           </div>

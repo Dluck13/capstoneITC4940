@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ApiError } from '../api/httpClient';
 import { register as registerRequest } from '../api/authApi';
+import ThemeToggleButton from '../components/ThemeToggleButton';
 
 const toMessage = (error) => {
   if (error instanceof ApiError && error.message) {
@@ -49,6 +50,10 @@ export default function RegisterPage({ onBackToLogin, onRegistered }) {
 
   return (
     <div className="auth-shell">
+      <div className="auth-theme-toggle-wrap">
+        <ThemeToggleButton />
+      </div>
+
       <section className="auth-card">
         <header className="auth-header">
           <h1>Create your account</h1>
@@ -125,4 +130,3 @@ export default function RegisterPage({ onBackToLogin, onRegistered }) {
     </div>
   );
 }
-
