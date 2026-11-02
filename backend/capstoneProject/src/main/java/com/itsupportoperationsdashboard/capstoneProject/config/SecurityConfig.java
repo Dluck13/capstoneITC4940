@@ -53,7 +53,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/auth/csrf").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
-                .requestMatchers(HttpMethod.GET, "/", "/index.html", "/login", "/register", "/tickets/new", "/tickets/*", "/admin/users/new", "/assets/**", "/favicon.ico").permitAll()
+                .requestMatchers(HttpMethod.GET, "/", "/home", "/index.html", "/login", "/register", "/tickets/new", "/tickets/*", "/admin/users/new", "/assets/**", "/favicon.ico").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auth/me").hasAnyRole("END_USER", "TECHNICIAN", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/admin/users").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/tickets", "/api/tickets/{id}")

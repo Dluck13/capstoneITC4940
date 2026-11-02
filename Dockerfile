@@ -20,6 +20,8 @@ FROM eclipse-temurin:21-jre-alpine AS runtime
 WORKDIR /app
 ENV SPRING_PROFILES_ACTIVE=prod
 ENV JAVA_TOOL_OPTIONS="-XX:InitialRAMPercentage=20.0 -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError"
-COPY --from=backend-builder /workspace/backend/target/capstoneProject-0.0.1-SNAPSHOT.jar ./app.jar
+RUN addgroup -S spring && adduser -S spring -G spring
+COPY --from=backend-builder --chown=spring:spring /workspace/backend/target/capstoneProject-0.0.1-SNAPSHOT.jar ./app.jar
+USER spring
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

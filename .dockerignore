@@ -9,7 +9,6 @@ frontend/.vite
 frontend/.cache
 
 backend/capstoneProject/target
-backend/capstoneProject/.mvn/wrapper/maven-wrapper.jar
 
 **/*.log
 **/.DS_Store
