@@ -40,6 +40,14 @@ class StaticAssetsSecurityIntegrationTest {
         mvc.perform(get("/favicon.svg"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("image/svg+xml"));
+
+        mvc.perform(get("/appfiles/applicationbundle.js"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/javascript"));
+
+        mvc.perform(get("/appfiles/applicationstyles.css"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/css"));
     }
 
     @Test

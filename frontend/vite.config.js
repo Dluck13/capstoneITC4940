@@ -7,17 +7,16 @@ export default defineConfig({
   build: {
     cssCodeSplit: false,
     rollupOptions: {
-      output: {        entryFileNames: 'assets/applicationbundle.js',
-        chunkFileNames: 'assets/applicationchunk.js',
+      output: {
+        entryFileNames: 'appfiles/applicationbundle.js',
+        chunkFileNames: 'appfiles/applicationchunk.js',
         assetFileNames: (assetInfo) => {
           if (assetInfo.name?.endsWith('.css')) {
-            return 'assets/applicationstyles.css'
+            return 'appfiles/applicationstyles.css'
           }
-          return 'assets/[name][extname]'
+          return 'appfiles/[name][extname]'
         },
       },
     },
   },
 })
-
-
